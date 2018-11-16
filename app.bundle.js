@@ -141,34 +141,48 @@ var gameScene = exports.gameScene = function (_Phaser$Scene) {
   }, {
     key: 'create',
     value: function create() {
+      var _this2 = this;
+
       this.sound.play("prologueTheme");
       this.mobs = {};
       this.socket = io();
-      this.socket.on('currentPlayers', function (players) {
+
+      var addPlayers = function addPlayers(players) {
+        var socketId = _this2.socket.id;
+        var scene = _this2;
         Object.keys(players).forEach(function (id) {
-          //console.log(players[id].playerId);
-          console.log(this.socket.id);
-          if (players[id].playerId === this.socket.id) {
-            this.player = this.add.existing(new _Player.Player(this, players[id].x, players[id].y, "atlas", "misa-front", map.tileWidth, 5));
-            this.physics.add.existing(this.player);
-            this.player.cursors = cursors;
-            this.player.map = map;
-            this.player.body.setSize(32, 40);
-            this.player.key = "player";
-            this.player.body.setOffset(0, 24);
-            this.physics.add.collider(this.player, worldLayer);
-            this.player.id = id;i;
-            console.log(this.player.x);
+          if (players[id].playerId === socketId) {
+            scene.player = scene.add.existing(new _Player.Player(scene, players[id].x, players[id].y, "atlas", "misa-front", map.tileWidth, 5));
+            scene.physics.add.existing(scene.player);
+            scene.player.cursors = cursors;
+            scene.player.map = map;
+            scene.player.body.setSize(32, 40);
+            scene.player.key = "player";
+            scene.player.body.setOffset(0, 24);
+            scene.physics.add.collider(scene.player, worldLayer);
+            scene.player.id = id;
+            scene.sys.updateList.add(scene.player);
+            camera.startFollow(scene.player);
+            console.log(scene.player);
           } else {
-            this.mobs[id] = this.add.existing(new _Mob.Mob(this, players[id].x, players[id].y, "atlas", "misa-front", map.tileWidth, 5));
-            this.mobs[id] = this.physics.add.existing(mob);
-            this.mobs[id].setSize(32, 40);
-            this.mobs[id].setOffset(0, 24);
-            this.mobs[id].id = id;
-            this.mobs[id].key = "otherPlayer";
+            scene.mobs[id] = scene.add.existing(new _Mob.Mob(scene, players[id].x, players[id].y, "atlas", "misa-front", map.tileWidth, 5));
+            scene.mobs[id] = scene.physics.add.existing(scene.mobs[id]);
+            scene.mobs[id].setSize(32, 40);
+            scene.mobs[id].body.setOffset(0, 24);
+            scene.mobs[id].id = id;
+            scene.mobs[id].key = "otherPlayer";
+            scene.sys.updateList.add(scene.mobs[id]);
           }
         });
-      });
+      };
+
+      var playerQuit = function playerQuit(id) {
+        if (_this2.player.id == id) _this2.player.destroy();else mobs[id].destroy();
+      };
+
+      this.socket.on('currentPlayers', addPlayers);
+      this.socket.on('disconnect', playerQuit);
+
       map = this.make.tilemap({ key: "map" });
 
       // Parameters are the name you gave the tileset in Tiled and then the key of the tileset image in
@@ -227,10 +241,7 @@ var gameScene = exports.gameScene = function (_Phaser$Scene) {
       });
 
       var camera = this.cameras.main;
-      camera.startFollow(this.player.body);
       camera.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
-      this.sys.updateList.add(player);
-      this.sys.updateList.add(mob);
     }
 
     //Checking for input and changes.
@@ -238,16 +249,15 @@ var gameScene = exports.gameScene = function (_Phaser$Scene) {
   }, {
     key: 'update',
     value: function update(time, delta) {
-      player.update(); //Catches player controls
+      if (this.player != null) this.player.update();
     }
   }]);
 
   return gameScene;
 }(Phaser.Scene);
-
-;
-
 //Defining global variables in module to be hoisted.
+
+
 var destination = new Phaser.Math.Vector2();
 var player = void 0;
 var mob = void 0;
