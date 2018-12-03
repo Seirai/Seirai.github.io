@@ -1,6 +1,6 @@
 webpackJsonp([0],{
 
-/***/ 1089:
+/***/ 1150:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13,9 +13,9 @@ exports.titleScene = undefined;
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _main = __webpack_require__(214);
+var _main = __webpack_require__(221);
 
-var _ui = __webpack_require__(213);
+var _ui = __webpack_require__(220);
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -79,7 +79,7 @@ var titleScene = exports.titleScene = function (_Phaser$Scene) {
 
 /***/ }),
 
-/***/ 1090:
+/***/ 1151:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -92,11 +92,11 @@ exports.gameScene = undefined;
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _Player = __webpack_require__(1091);
+var _Player = __webpack_require__(1152);
 
-var _Mob = __webpack_require__(449);
+var _Mob = __webpack_require__(468);
 
-var _ui = __webpack_require__(213);
+var _ui = __webpack_require__(220);
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -111,7 +111,9 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 //Importing controls from main for use in this scene.
 
-//import {io} from "../../server";
+// import "phaser";
+
+// import {initiateCombat} from '../systems/Combat';
 
 var gameScene = exports.gameScene = function (_Phaser$Scene) {
   _inherits(gameScene, _Phaser$Scene);
@@ -141,47 +143,7 @@ var gameScene = exports.gameScene = function (_Phaser$Scene) {
   }, {
     key: 'create',
     value: function create() {
-      var _this2 = this;
-
       this.sound.play("prologueTheme");
-      this.mobs = {};
-      this.socket = io();
-
-      var addPlayers = function addPlayers(players) {
-        var socketId = _this2.socket.id;
-        var scene = _this2;
-        Object.keys(players).forEach(function (id) {
-          if (players[id].playerId === socketId) {
-            scene.player = scene.add.existing(new _Player.Player(scene, players[id].x, players[id].y, "atlas", "misa-front", map.tileWidth, 5));
-            scene.physics.add.existing(scene.player);
-            scene.player.cursors = cursors;
-            scene.player.map = map;
-            scene.player.body.setSize(32, 40);
-            scene.player.key = "player";
-            scene.player.body.setOffset(0, 24);
-            scene.physics.add.collider(scene.player, worldLayer);
-            scene.player.id = id;
-            scene.sys.updateList.add(scene.player);
-            camera.startFollow(scene.player);
-            console.log(scene.player);
-          } else {
-            scene.mobs[id] = scene.add.existing(new _Mob.Mob(scene, players[id].x, players[id].y, "atlas", "misa-front", map.tileWidth, 5));
-            scene.mobs[id] = scene.physics.add.existing(scene.mobs[id]);
-            scene.mobs[id].setSize(32, 40);
-            scene.mobs[id].body.setOffset(0, 24);
-            scene.mobs[id].id = id;
-            scene.mobs[id].key = "otherPlayer";
-            scene.sys.updateList.add(scene.mobs[id]);
-          }
-        });
-      };
-
-      var playerQuit = function playerQuit(id) {
-        if (_this2.player.id == id) _this2.player.destroy();else mobs[id].destroy();
-      };
-
-      this.socket.on('currentPlayers', addPlayers);
-      this.socket.on('disconnect', playerQuit);
 
       map = this.make.tilemap({ key: "map" });
 
@@ -214,6 +176,29 @@ var gameScene = exports.gameScene = function (_Phaser$Scene) {
 
 
       cursors = this.input.keyboard.createCursorKeys();
+
+      mob = this.add.existing(new _Mob.Mob(this, spawnPoint.x + 64, spawnPoint.y + 64, "atlas", "misa-front", map.tileWidth, 5));
+      mob = this.physics.add.existing(mob);
+      mob.body.setSize(32, 40);
+      mob.body.setOffset(0, 24);
+      mob.key = "testmob";
+
+      // console.log(mob);
+      // mob.setInteractive();
+      // mob.on("pointerdown", this.openMobMenu);
+
+
+      this.physics.add.collider(mob, worldLayer);
+
+      player = this.add.existing(new _Player.Player(this, spawnPoint.x, spawnPoint.y, "atlas", "misa-front", map.tileWidth, 5));
+      player = this.physics.add.existing(player);
+      player.cursors = cursors;
+      player.map = map;
+      player.body.setSize(32, 40);
+      player.key = "player";
+      player.body.setOffset(0, 24);
+      this.physics.add.collider(player, worldLayer);
+
       var anims = this.anims;
       anims.create({
         key: "misa-left-walk",
@@ -241,7 +226,11 @@ var gameScene = exports.gameScene = function (_Phaser$Scene) {
       });
 
       var camera = this.cameras.main;
+      camera.startFollow(player);
       camera.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
+
+      this.sys.updateList.add(player);
+      this.sys.updateList.add(mob);
     }
 
     //Checking for input and changes.
@@ -249,15 +238,16 @@ var gameScene = exports.gameScene = function (_Phaser$Scene) {
   }, {
     key: 'update',
     value: function update(time, delta) {
-      if (this.player != null) this.player.update();
+      player.update(); //Catches player controls
     }
   }]);
 
   return gameScene;
 }(Phaser.Scene);
+
+;
+
 //Defining global variables in module to be hoisted.
-
-
 var destination = new Phaser.Math.Vector2();
 var player = void 0;
 var mob = void 0;
@@ -267,7 +257,7 @@ var speed = 175;
 
 /***/ }),
 
-/***/ 1091:
+/***/ 1152:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -282,7 +272,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
 
-var _Mob2 = __webpack_require__(449);
+var _Mob2 = __webpack_require__(468);
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -343,7 +333,68 @@ var Player = exports.Player = function (_Mob) {
 
 /***/ }),
 
-/***/ 213:
+/***/ 1153:
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+/**
+ *  @author      Seilai Zhao <seilaizh@gmail.com>
+ *  Combat.js
+ *  We'll be implementing the combat system here.
+ */
+
+var initiateCombat = exports.initiateCombat = function initiateCombat(pointer, mobKey) {
+  if (pointer.leftButtonDown()) {
+    var sceneChildren = pointer.camera.scene.children.getChildren();
+    var _player = void 0;
+    var mob = void 0;
+    sceneChildren.forEach(function (entry) {
+      if (entry.key == "player") _player = entry;
+      if (entry.key == mobKey) mob = entry;
+    });
+    _player.inCombat = true;
+    if (_player.isMoving()) {
+      _player.moveIntention = false;
+      _player.stopMovement();
+      _player.syncDestination();
+    }
+    //this.mob.inCobmat = true;
+    //this.mob.moveIntention = false;
+    //this.mob.stopMovement();
+    //this.mob.syncDestination();
+    //return mainCombatLoop(player, this.mob);
+  }
+};
+
+var mainCombatLoop = function mainCombatLoop(player, mob, turn) {
+  var currentTurn = void 0;
+  var turnOrderedCombatants = [];
+  if (turn == null) currentTurn = 0;
+  //Turn order array
+  //Sort an array by speed and place it into the array-- or, for now, just compare player and mobMenu
+  if (player.speed > mob.speed) {
+    turnOrderedCombatants.push(player);
+    turnOrderedCombatants.push(mob);
+  } else {
+    turnOrderedCombatants.push(mob);
+    turnOrderedCombatants.push(player);
+  }
+};
+
+var openCombatMenu = function openCombatMenu(mob, turnOrderedCombatants) {
+  if (mob.key == player) {
+    console.log("create menu here");
+  }
+};
+
+/***/ }),
+
+/***/ 220:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -576,7 +627,7 @@ var Menu = exports.Menu = function (_Phaser$GameObjects$C2) {
 
 /***/ }),
 
-/***/ 214:
+/***/ 221:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -587,27 +638,18 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.game = undefined;
 
-__webpack_require__(215);
+__webpack_require__(222);
 
-var _titleScene = __webpack_require__(1089);
+var _titleScene = __webpack_require__(1150);
 
-var _gameScene = __webpack_require__(1090);
-
-var _Combat = __webpack_require__(450);
-
-/**
-*  @author       Seilai Zhao <seilaizh@gmail.com>
-*  main.js
-*  Entry point importing all scenes and configuring gameConfig.
-*
-*/
+var _gameScene = __webpack_require__(1151);
 
 var gameConfig = {
   type: Phaser.AUTO,
   width: 1024,
   height: 768,
   disableContextMenu: true,
-  scene: [_titleScene.titleScene, _gameScene.gameScene, _Combat.combatScene],
+  scene: [_titleScene.titleScene, _gameScene.gameScene],
 
   //Enabling physics
   physics: {
@@ -616,14 +658,20 @@ var gameConfig = {
       gravity: { y: 0 //No gravity in a top-down game.
       } }
   }
-};
+}; /**
+   *  @author       Seilai Zhao <seilaizh@gmail.com>
+   *  main.js
+   *  Entry point importing all scenes and configuring gameConfig.
+   *
+   */
+
 var controls = void 0;
 var game = new Phaser.Game(gameConfig);
 exports.game = game;
 
 /***/ }),
 
-/***/ 449:
+/***/ 468:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -638,9 +686,9 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
 
-var _ui = __webpack_require__(213);
+var _ui = __webpack_require__(220);
 
-var _Combat = __webpack_require__(450);
+var _Combat = __webpack_require__(1153);
 
 var Combat = _interopRequireWildcard(_Combat);
 
@@ -940,78 +988,6 @@ var Mob = exports.Mob = function (_Phaser$GameObjects$S) {
   return Mob;
 }(Phaser.GameObjects.Sprite);
 
-/***/ }),
-
-/***/ 450:
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-/**
- *  @author      Seilai Zhao <seilaizh@gmail.com>
- *  Combat.js
- *  We'll be implementing the combat system here.
- */
-
-var initiateCombat = exports.initiateCombat = function initiateCombat(pointer, mobKey) {
-  if (pointer.leftButtonDown()) {
-    pointer.camera.scene.scene.launch("combatScene");
-  }
-};
-
-var combatScene = exports.combatScene = function (_Phaser$Scene) {
-  _inherits(combatScene, _Phaser$Scene);
-
-  function combatScene() {
-    _classCallCheck(this, combatScene);
-
-    return _possibleConstructorReturn(this, (combatScene.__proto__ || Object.getPrototypeOf(combatScene)).call(this, { key: "combatScene" }));
-  }
-
-  _createClass(combatScene, [{
-    key: "init",
-    value: function init() {
-      var _this2 = this;
-
-      this.gameScene = this.scene.get("gameScene");
-      this.sceneChildren = this.gameScene.children.getChildren();
-      this.player;
-      this.mob;
-      var playerGetter = function playerGetter(entry) {
-        if (entry.key == "player") _this2.player = entry;
-      };
-      this.sceneChildren.forEach(playerGetter);
-      this.player.inCombat = true;
-      if (this.player.isMoving()) {
-        this.player.moveIntention = false;
-        this.player.stopMovement();
-        this.player.syncDestination();
-      }
-    }
-  }, {
-    key: "create",
-    value: function create() {}
-  }, {
-    key: "update",
-    value: function update() {}
-  }]);
-
-  return combatScene;
-}(Phaser.Scene);
-
 /***/ })
 
-},[214]);
+},[221]);
